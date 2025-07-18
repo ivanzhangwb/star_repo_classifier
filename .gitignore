@@ -204,6 +204,7 @@ output/
 *.json
 *.png
 *.html
+!backend/templates/*.html
 *.md
 !README.md
 !README_CN.md
