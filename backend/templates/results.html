@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Stars Classification Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">GitHub Stars Classification</h1>
+                    <p class="mt-1 text-blue-100">Analysis of your starred repositories</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-100">Generated on <span id="generation-date">{{ generation_date }}</span></p>
+                    <p class="text-sm text-blue-100">Total repositories: <span id="total-repos" class="font-bold">{{ total_repos }}</span></p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                        <i class="fas fa-star text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Repositories</p>
+                        <p class="text-2xl font-bold text-gray-900" id="stat-total-repos">{{ total_repos }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                        <i class="fas fa-heart text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Stars</p>
+                        <p class="text-2xl font-bold text-gray-900" id="stat-total-stars">{{ total_stars }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                        <i class="fas fa-tags text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Categories</p>
+                        <p class="text-2xl font-bold text-gray-900" id="stat-categories">{{ categories_count }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-orange-100 rounded-lg p-3">
+                        <i class="fas fa-chart-bar text-orange-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Average Stars</p>
+                        <p class="text-2xl font-bold text-gray-900" id="stat-avg-stars">{{ avg_stars }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Category Distribution -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-pie text-blue-600 mr-2"></i>
+                    Category Distribution
+                </h2>
+                <canvas id="categoryChart" width="400" height="300"></canvas>
+            </div>
+
+            <!-- Language Distribution -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-code text-green-600 mr-2"></i>
+                    Language Distribution
+                </h2>
+                <canvas id="languageChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Repositories -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-trophy text-yellow-600 mr-2"></i>
+                Top Starred Repositories
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Repository
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Language
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Stars
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Forks
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="top-repositories">
+                        <!-- Top repositories will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                <i class="fas fa-list text-purple-600 mr-2"></i>
+                Detailed Category Breakdown
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="category-breakdown">
+                <!-- Category breakdown will be populated here -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Generated by GitHub Star Classifier - <a href="https://github.com/your-repo" class="text-blue-600 hover:text-blue-800">View on GitHub</a></p>
+        </footer>
+    </main>
+
+    <script>
+        // Data injected from template
+        const data = {
+            stats: {{ stats_json }},
+            repos: {{ repos_json }},
+            categories: {{ categories_json }},
+            languages: {{ languages_json }}
+        };
+
+        // Initialize charts when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            populateTables();
+            populateStats();
+        });
+
+        function initializeCharts() {
+            // Category Distribution Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const categories = Object.keys(data.stats.categories);
+            const categoryCounts = Object.values(data.stats.categories);
+            
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: categoryCounts,
+                        backgroundColor: [
+                            '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
+                            '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Language Distribution Chart
+            const languageCtx = document.getElementById('languageChart').getContext('2d');
+            const languages = Object.keys(data.stats.languages).slice(0, 8);
+            const languageCounts = Object.values(data.stats.languages).slice(0, 8);
+            
+            new Chart(languageCtx, {
+                type: 'bar',
+                data: {
+                    labels: languages,
+                    datasets: [{
+                        label: 'Repositories',
+                        data: languageCounts,
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function populateTables() {
+            // Top repositories
+            const sortedRepos = data.repos
+                .sort((a, b) => b.stargazers_count - a.stargazers_count)
+                .slice(0, 10);
+
+            const tbody = document.getElementById('top-repositories');
+            tbody.innerHTML = sortedRepos.map(repo => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    <a href="${repo.html_url}" target="_blank" class="text-blue-600 hover:text-blue-900">
+                                        ${repo.full_name}
+                                    </a>
+                                </div>
+                                <div class="text-sm text-gray-500">${repo.description || 'No description'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            ${repo.category}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${repo.language || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${repo.stargazers_count.toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${repo.forks_count.toLocaleString()}
+                    </td>
+                </tr>
+            `).join('');
+
+            // Category breakdown
+            const categoryDiv = document.getElementById('category-breakdown');
+            const categoryData = Object.entries(data.stats.categories_with_percentage || {});
+            
+            categoryDiv.innerHTML = categoryData.map(([category, data]) => `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-medium text-gray-900">${category}</h3>
+                        <span class="text-sm text-gray-500">${data.percentage}%</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-2xl font-bold text-gray-900">${data.count}</div>
+                        <div class="text-sm text-gray-500">repositories</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateStats() {
+            document.getElementById('generation-date').textContent = new Date().toLocaleDateString();
+            document.getElementById('total-repos').textContent = data.stats.total_repos;
+            document.getElementById('stat-total-repos').textContent = data.stats.total_repos;
+            document.getElementById('stat-total-stars').textContent = data.stats.total_stars.toLocaleString();
+            document.getElementById('stat-categories').textContent = Object.keys(data.stats.categories).length;
+            document.getElementById('stat-avg-stars').textContent = Math.round(data.stats.avg_stars);
+        }
+    </script>
+</body>
+</html>
